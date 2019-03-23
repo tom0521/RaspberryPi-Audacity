@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import subprocess
 from gpiozero import LED, Button
 from threading import Thread
 
@@ -17,6 +18,8 @@ TOFILE = None
 FROMFILE = None
 
 def setup:
+	subprocess.call('audacity')
+	time.sleep(10)
 	record_button.when_pressed = record
 	pause_button.when_pressed = pause
 	stop_button.when_pressed = stop
@@ -52,16 +55,21 @@ def do_command(command):
 	print("Received: <<< \n" + response)
 	return response
 
+def leds_off():
+	for led in LEDS:
+		led.off()
+
 def loading_anim(thread):
+	leds_off()
 	while thread.is_active():
-		for i in range(3):
-			LEDS[i].on()
-		for i in range(3):
-			LEDS[i].off()
-		for i in range(2,-1,-1):
-			LEDS[i].on()
-		for i in range(2,-1,-1):
-			LEDS[i].off()
+		for led in LEDS:
+			led.on()
+		for led in LEDS:
+			led.off()
+		for led in reversed(LEDS):
+			led.on()
+		for led in reversed(LEDS):
+			led.off()
 		
 # load the audacity script-pipe
 
@@ -79,6 +87,7 @@ def reset():
 
 def stop():
 	""" Stop recording and save the project """
+	leds_off()
 	save_thread = Thread(target=reset)
 	save_thread.start()
 	loading_anim(save_thread)
@@ -86,10 +95,12 @@ def stop():
 	LEDS[2].on()
 
 def record():
+	leds_off()
 	do_command('Record1stChoice:')
 	LEDS[0].on()
 
 def pause():
+	leds_off()
 	do_command('Pause:')
 	LEDS[1].on()
 
