@@ -19,7 +19,7 @@ FROMNAME = '/tmp/audacity_script_pipe.from.' + str(os.getuid())
 TOFILE = None
 FROMFILE = None
 
-def setup:
+def setup():
 	""" Run audacity and wait 10 seconds for it to start """
 	subprocess.call('audacity')
 	time.sleep(10)
