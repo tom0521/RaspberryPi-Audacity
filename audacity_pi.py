@@ -4,14 +4,15 @@ import time
 import subprocess
 from gpiozero import LED, Button
 from threading import Thread
+from signal import pause
 
 """ Code partially adapted from the audacity scripting repo """
 
 """ Initialize LEDs and Buttons """
-LEDS = [ LED(0), LED(1), LED(2) ]
-record_button = Button(3)
-pause_button = Button(4)
-stop_button = Button(5)
+LEDS = [ LED(4), LED(17), LED(27) ] # RED, YELLOW, GREEN
+record_button = Button(23)
+pause_button = Button(24)
+stop_button = Button(25)
 
 # Path to files that sends/receives commands/values to/from audacity
 TONAME = '/tmp/audacity_script_pipe.to.' + str(os.getuid())
@@ -21,16 +22,16 @@ FROMFILE = None
 
 def setup():
 	""" Run audacity and wait 10 seconds for it to start """
-	subprocess.call('audacity')
+	#subprocess.call('audacity')
 	time.sleep(10)
 	""" Set event listener methods for button presses """
 	record_button.when_pressed = record
-	pause_button.when_pressed = pause
+	pause_button.when_pressed = pause_rec
 	stop_button.when_pressed = stop
 	""" Check for the script-pipes and open them """
 	if not (os.path.exists(TONAME) and os.path.exists(FROMNAME)):
 		print("mod-script-pipe not found...")
-		sys.exit()
+		return
 	print(" -- Pipes found!")
 	TOFILE = open(TONAME, 'w')
 	print(" -- To Pipe opened")
@@ -67,7 +68,7 @@ def leds_off():
 def loading_anim(thread):
 	""" Run through LED animation while the thread is active """
 	leds_off()
-	while thread.is_active():
+	while thread.is_alive():
 		for led in LEDS:
 			led.on()
 			time.sleep(0.5)
@@ -112,7 +113,7 @@ def record():
 	do_command('Record1stChoice:')
 	LEDS[0].on()
 
-def pause():
+def pause_rec():
 	""" Pause recording and turn on the Yellow LED """
 	leds_off()
 	do_command('Pause:')
@@ -123,3 +124,5 @@ setup_thread = Thread(target=setup)
 setup_thread.start()
 loading_anim(setup_thread)
 setup_thread.join()
+if TOFILE != None or FROMFILE != None:
+    pause()
