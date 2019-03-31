@@ -22,8 +22,8 @@ FROMFILE = None
 
 def setup():
 	""" Run audacity and wait 10 seconds for it to start """
-	#subprocess.call('audacity')
-	time.sleep(10)
+	subprocess.Popen(sys.argv[1] + '/audacity')
+	time.sleep(30)
 	""" Set event listener methods for button presses """
 	record_button.when_pressed = record
 	pause_button.when_pressed = pause_rec
@@ -65,36 +65,36 @@ def leds_off():
 	for led in LEDS:
 		led.off()
 
-def loading_anim(thread):
+def loading_anim(thread, sleeptime=0.25):
 	""" Run through LED animation while the thread is active """
 	leds_off()
 	while thread.is_alive():
 		for led in LEDS:
 			led.on()
-			time.sleep(0.5)
+			time.sleep(sleeptime)
 		for led in LEDS:
 			led.off()
-			time.sleep(0.5)
+			time.sleep(sleeptime)
 		for led in reversed(LEDS):
 			led.on()
-			time.sleep(0.5)
+			time.sleep(sleeptime)
 		for led in reversed(LEDS):
 			led.off()
-			time.sleep(0.5)
+			time.sleep(sleeptime)
 		
 def save():
 	""" Saves the current project with filename of its timestamp """
-	do_command('SaveProject2: Filename=' + time.asctime(time.localtime(time.time())))
+        do_command('MenuCommand: CommandName=SaveProject2') #Filename=' + time.asctime(time.localtime(time.time())))
 	# TODO
 	# connect to server
 	# save file on server
 
 def reset():
 	""" Stop recording, save and close the project then open a new one """
-	do_command('PlayStop:')
+        do_command('MenuCommand: CommandName=PlayStop')
 	save()
-	do_command('Close:')
-	do_command('New:')
+        do_command('MenuCommand: CommandName=SelectAll')
+        do_command('MenuCommand: CommandName=Delete')
 
 def stop():
 	""" Stop recording and save the project """
@@ -105,18 +105,18 @@ def stop():
 	save_thread.start()
 	loading_anim(save_thread)
 	save_thread.join()
-	LEDS[2].on()
+	LEDS[0].on()
 
 def record():
 	""" Start recording and turn on the Red LED """
 	leds_off()
-	do_command('Record1stChoice:')
-	LEDS[0].on()
+        do_command('MenuCommand: CommandName=Record1stChoice')
+	LEDS[2].on()
 
 def pause_rec():
 	""" Pause recording and turn on the Yellow LED """
 	leds_off()
-	do_command('Pause:')
+        do_command('MenuCommand: CommandName=Pause')
 	LEDS[1].on()
 
 """ While setting everything up, play loading animation """
@@ -124,5 +124,8 @@ setup_thread = Thread(target=setup)
 setup_thread.start()
 loading_anim(setup_thread)
 setup_thread.join()
-if TOFILE != None or FROMFILE != None:
-    pause()
+if TOFILE == None or FROMFILE == None:
+    sys.exit(0)
+
+LED[0].on()
+pause()
