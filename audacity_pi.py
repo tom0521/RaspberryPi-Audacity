@@ -17,115 +17,103 @@ stop_button = Button(25)
 # Path to files that sends/receives commands/values to/from audacity
 TONAME = '/tmp/audacity_script_pipe.to.' + str(os.getuid())
 FROMNAME = '/tmp/audacity_script_pipe.from.' + str(os.getuid())
-TOFILE = None
-FROMFILE = None
-
-def setup():
-	""" Run audacity and wait 10 seconds for it to start """
-	subprocess.Popen(sys.argv[1] + '/audacity')
-	time.sleep(30)
-	""" Set event listener methods for button presses """
-	record_button.when_pressed = record
-	pause_button.when_pressed = pause_rec
-	stop_button.when_pressed = stop
-	""" Check for the script-pipes and open them """
-	if not (os.path.exists(TONAME) and os.path.exists(FROMNAME)):
-		print("mod-script-pipe not found...")
-		return
-	print(" -- Pipes found!")
-	TOFILE = open(TONAME, 'w')
-	print(" -- To Pipe opened")
-	FROMFILE = open(FROMNAME, 'rt')
-	print(" -- From Pipe opened")
+""" Run audacity and wait 10 seconds for it to start """
+subprocess.Popen(sys.argv[1] + '/audacity')
+time.sleep(90)
+""" Check for the script-pipes and open them """
+if not (os.path.exists(TONAME) and os.path.exists(FROMNAME)):
+    print("mod-script-pipe not found...")
+    sys.exit(0)
+print(" -- Pipes found!")
+TOFILE = open(TONAME, 'w')
+print(" -- To Pipe opened")
+FROMFILE = open(FROMNAME, 'rt')
+print(" -- From Pipe opened")
 
 def send_command(command):
-	""" Send a command """
-	print("Send: >>> \n" + command)
-	TOFILE.write(command + '\n')
-	TOFILE.flush()
+    """ Send a command """
+    print("Send: >>> \n" + command)
+    TOFILE.write(command + '\n')
+    TOFILE.flush()
 
 def get_response():
-	""" Return a command response """
-	result = ''
-	line = ''
-	while line != '\n':
-		result += line
-		line = FROMFILE.readline()
-	return result
+    """ Return a command response """
+    result = ''
+    line = ''
+    while line != '\n':
+    	result += line
+	line = FROMFILE.readline()
+    return result
 
 def do_command(command):
-	""" Send a command and receive a response """
-	send_command(command)
-	response = get_response()
-	print("Received: <<< \n" + response)
-	return response
+    """ Send a command and receive a response """
+    send_command(command)
+    response = get_response()
+    print("Received: <<< \n" + response)
+    return response
 
 def leds_off():
-	""" Turn all LEDs off """
-	for led in LEDS:
-		led.off()
+    """ Turn all LEDs off """
+    for led in LEDS:
+	led.off()
 
 def loading_anim(thread, sleeptime=0.25):
-	""" Run through LED animation while the thread is active """
-	leds_off()
-	while thread.is_alive():
-		for led in LEDS:
-			led.on()
-			time.sleep(sleeptime)
-		for led in LEDS:
-			led.off()
-			time.sleep(sleeptime)
-		for led in reversed(LEDS):
-			led.on()
-			time.sleep(sleeptime)
-		for led in reversed(LEDS):
-			led.off()
-			time.sleep(sleeptime)
+    """ Run through LED animation while the thread is active """
+    leds_off()
+    while thread.is_alive():
+    	for led in LEDS:
+        	led.on()
+		time.sleep(sleeptime)
+	for led in LEDS:
+		led.off()
+		time.sleep(sleeptime)
+	for led in reversed(LEDS):
+		led.on()
+		time.sleep(sleeptime)
+	for led in reversed(LEDS):
+		led.off()
+		time.sleep(sleeptime)
 		
 def save():
-	""" Saves the current project with filename of its timestamp """
-        do_command('MenuCommand: CommandName=SaveProject2') #Filename=' + time.asctime(time.localtime(time.time())))
-	# TODO
-	# connect to server
-	# save file on server
+    """ Saves the current project with filename of its timestamp """
+    do_command('MenuCommand: CommandName=SaveProject2') #Filename=' + time.asctime(time.localtime(time.time())))
+    # TODO
+    # connect to server
+    # save file on server
 
 def reset():
-	""" Stop recording, save and close the project then open a new one """
-        do_command('MenuCommand: CommandName=PlayStop')
-	save()
-        do_command('MenuCommand: CommandName=SelectAll')
-        do_command('MenuCommand: CommandName=Delete')
+    """ Stop recording, save and close the project then open a new one """
+    do_command('MenuCommand: CommandName=PlayStop')
+    save()
+    do_command('MenuCommand: CommandName=SelectAll')
+    do_command('MenuCommand: CommandName=Delete')
 
 def stop():
-	""" Stop recording and save the project """
-	"""   While saving play LED animation   """
-	"""  When finished, turn on green LED   """
-	leds_off()
-	save_thread = Thread(target=reset)
-	save_thread.start()
-	loading_anim(save_thread)
-	save_thread.join()
-	LEDS[0].on()
+    """ Stop recording and save the project """
+    """   While saving play LED animation   """
+    """  When finished, turn on green LED   """
+    leds_off()
+    save_thread = Thread(target=reset)
+    save_thread.start()
+    loading_anim(save_thread)
+    save_thread.join()
+    LEDS[0].on()
 
 def record():
-	""" Start recording and turn on the Red LED """
-	leds_off()
-        do_command('MenuCommand: CommandName=Record1stChoice')
-	LEDS[2].on()
+    """ Start recording and turn on the Red LED """
+    leds_off()
+    do_command('MenuCommand: CommandName=Record1stChoice')
+    LEDS[2].on()
 
 def pause_rec():
-	""" Pause recording and turn on the Yellow LED """
-	leds_off()
-        do_command('MenuCommand: CommandName=Pause')
-	LEDS[1].on()
+    """ Pause recording and turn on the Yellow LED """
+    leds_off()
+    do_command('MenuCommand: CommandName=Pause')
+    LEDS[1].on()
 
-""" While setting everything up, play loading animation """
-setup_thread = Thread(target=setup)
-setup_thread.start()
-loading_anim(setup_thread)
-setup_thread.join()
-if TOFILE == None or FROMFILE == None:
-    sys.exit(0)
-
-LED[0].on()
+""" Set event listener methods for button presses """
+record_button.when_pressed = record
+pause_button.when_pressed = pause_rec
+stop_button.when_pressed = stop
+LEDS[0].on()
 pause()
