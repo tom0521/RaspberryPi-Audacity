@@ -18,8 +18,11 @@ stop_button = Button(25)
 TONAME = '/tmp/audacity_script_pipe.to.' + str(os.getuid())
 FROMNAME = '/tmp/audacity_script_pipe.from.' + str(os.getuid())
 """ Run audacity and wait 10 seconds for it to start """
-subprocess.Popen(sys.argv[1] + '/audacity')
-time.sleep(90)
+#subprocess.Popen(sys.argv[1] + '/audacity')
+#wait_thread = Thread(target=time.sleep(90))
+#thread.start()
+#loading_animation(wait_thread)
+#wait_thread.join()
 """ Check for the script-pipes and open them """
 if not (os.path.exists(TONAME) and os.path.exists(FROMNAME)):
     print("mod-script-pipe not found...")
@@ -76,17 +79,15 @@ def loading_anim(thread, sleeptime=0.25):
 		
 def save():
     """ Saves the current project with filename of its timestamp """
-    do_command('MenuCommand: CommandName=SaveProject2') #Filename=' + time.asctime(time.localtime(time.time())))
+    do_command('SaveProject2: Filename=' + time.asctime(time.localtime(time.time())))
     # TODO
     # connect to server
     # save file on server
 
 def reset():
     """ Stop recording, save and close the project then open a new one """
-    do_command('MenuCommand: CommandName=PlayStop')
+    do_command('PlayStop')
     save()
-    do_command('MenuCommand: CommandName=SelectAll')
-    do_command('MenuCommand: CommandName=Delete')
 
 def stop():
     """ Stop recording and save the project """
@@ -102,13 +103,13 @@ def stop():
 def record():
     """ Start recording and turn on the Red LED """
     leds_off()
-    do_command('MenuCommand: CommandName=Record1stChoice')
+    do_command('Record1stChoice:')
     LEDS[2].on()
 
 def pause_rec():
     """ Pause recording and turn on the Yellow LED """
     leds_off()
-    do_command('MenuCommand: CommandName=Pause')
+    do_command('Pause:')
     LEDS[1].on()
 
 """ Set event listener methods for button presses """
